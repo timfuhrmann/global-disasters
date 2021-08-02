@@ -1,5 +1,6 @@
+import ReactDOM from "react-dom";
 import { Vector3 } from "three";
-import { EQ, IconMarker } from "../../Icon";
+import { Marker } from "../../../components/Marker";
 
 export const positions = [
     {
@@ -33,30 +34,10 @@ export const latLonToRad = (lat: number, lon: number, radius: number): Vector3 =
 
 export const createLabel = (feature: Api.Feature): HTMLDivElement => {
     const div = document.createElement("div");
-    div.className = "label";
     div.style.opacity = "0";
+    div.className = "label";
 
-    switch (feature.properties.alertscore) {
-        case 1:
-            div.classList.add("is-green");
-            break;
-        case 2:
-            div.classList.add("is-orange");
-            break;
-        case 3:
-            div.classList.add("is-red");
-            break;
-    }
-
-    const marker = document.createElement("svg");
-    marker.innerHTML = IconMarker;
-    marker.className = "marker";
-    div.appendChild(marker);
-
-    const type = document.createElement("svg");
-    type.innerHTML = EQ;
-    type.className = "type";
-    marker.appendChild(type);
+    ReactDOM.render(<Marker feature={feature} />, div);
 
     document.body.appendChild(div);
     return div;

@@ -17,6 +17,8 @@ import {
     Points,
     BufferGeometry,
     BufferAttribute,
+    MathUtils,
+    Material,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
@@ -30,7 +32,6 @@ interface Point {
 
 interface RendererOptions {
     mounted: () => void;
-    features: Api.Feature[];
 }
 
 export class GlobeRenderer {
@@ -42,18 +43,18 @@ export class GlobeRenderer {
     private object: Object3D | null = null;
 
     private mouse: Vector2;
-    private radius = 88;
+    private radius = 90;
+    //private radius = 88;
     private activeSequence = 0;
 
     private requestId: number | null = null;
 
-    private features: Api.Feature[];
+    private features: Api.Feature[] = [];
     private points: Point[] = [];
 
     private onMounted: () => void;
 
     constructor(options: RendererOptions) {
-        this.features = options.features;
         this.onMounted = options.mounted;
         this.scene = new Scene();
         this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -88,13 +89,12 @@ export class GlobeRenderer {
             return;
         }
 
-        this.activeSequence = sequence;
-
         gsap.timeline({
             defaults: { duration: 1, ease: Quint.easeInOut },
             onComplete: () => {
+                this.activeSequence = sequence;
+
                 if (sequence === 1) {
-                    this.addCoordinates();
                     this.controls.minDistance = 150;
                 }
             },
@@ -193,6 +193,36 @@ export class GlobeRenderer {
         this.mouse.y = event.clientY / window.innerHeight - 0.5;
     }
 
+    private clearPoints() {
+        this.points.forEach(point => {
+            point.label.remove();
+            point.mesh.geometry.dispose();
+            (point.mesh.material as Material).dispose();
+            this.scene.remove(point.mesh);
+        });
+
+        this.points = [];
+    }
+
+    public setFeatures(features: Api.Feature[]): void {
+        // if (this.activeSequence > 0) {
+        //     gsap.timeline().to(
+        //         this.camera.rotation,
+        //         {
+        //             duration: 1,
+        //             z: this.camera.rotation.z + 100,
+        //             ease: Quint.easeInOut,
+        //         },
+        //         0
+        //     );
+        // }
+
+        this.clearPoints();
+
+        this.features = features;
+        this.addCoordinates();
+    }
+
     private addCoordinates() {
         if (!this.features) {
             return;
@@ -209,7 +239,7 @@ export class GlobeRenderer {
             return;
         }
 
-        const mesh = new Mesh(new SphereBufferGeometry(0.1, 20, 20), new MeshBasicMaterial());
+        const mesh = new Mesh(new SphereBufferGeometry(0.0001, 20, 20), new MeshBasicMaterial());
 
         const { x, y, z } = latLonToRad(lat, lon, this.radius);
 
@@ -277,35 +307,35 @@ export class GlobeRenderer {
     private render(): void {
         this.renderer.render(this.scene, this.camera);
 
-        this.points.forEach(({ label, mesh }) => {
-            const point = mesh.clone();
-
-            point.position.set(
-                point.position.x * 0.966,
-                point.position.y * 0.966,
-                point.position.z * 0.966
-            );
-
-            const screen = this.toScreenPosition(point);
-            label.style.transform = `translate3d(${screen.x - 15}px, ${screen.y}px, 0)`;
-
-            const direction = new Vector3();
-            direction.copy(mesh.position).sub(this.camera.position).normalize();
-            this.raycaster.set(this.camera.position, direction);
-            const intersections = this.raycaster.intersectObject(this.scene, true);
-            const intersected =
-                intersections.length > 0 ? intersections[0].object.uuid === mesh.uuid : false;
-
-            if (intersected && label.style.opacity === "0") {
-                label.style.opacity = "1";
-            } else if (!intersected && label.style.opacity === "1") {
-                label.style.opacity = "0";
-            }
-        });
-
         if (this.activeSequence < 1) {
             this.scene.rotation.y -= this.mouse.x * 0.01;
         } else {
+            this.points.forEach(({ label, mesh }) => {
+                const point = mesh.clone();
+
+                point.position.set(
+                    point.position.x * 0.966,
+                    point.position.y * 0.966,
+                    point.position.z * 0.966
+                );
+
+                const screen = this.toScreenPosition(point);
+                label.style.transform = `translate3d(${screen.x - 15}px, ${screen.y}px, 0)`;
+
+                const direction = new Vector3();
+                direction.copy(mesh.position).sub(this.camera.position).normalize();
+                this.raycaster.set(this.camera.position, direction);
+                const intersections = this.raycaster.intersectObject(this.scene, true);
+                const intersected =
+                    intersections.length > 0 ? intersections[0].object.uuid === mesh.uuid : false;
+
+                if (intersected && label.style.opacity === "0") {
+                    label.style.opacity = "1";
+                } else if (!intersected && label.style.opacity === "1") {
+                    label.style.opacity = "0";
+                }
+            });
+
             this.controls.update();
         }
 
@@ -320,7 +350,6 @@ export class GlobeRenderer {
         this.removeEventListeners();
         this.renderer.domElement.remove();
 
-        const labels = document.querySelectorAll(".label");
-        labels.forEach(label => label.remove());
+        this.points.forEach(point => point.label.remove());
     }
 }

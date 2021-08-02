@@ -5,6 +5,7 @@ import { GetServerSideProps } from "next";
 import { GlobeProps } from "../app/components/Globe";
 import { Hero } from "../app/components/Hero";
 import { fetchEvents } from "../app/lib/api";
+import { Marker } from "../app/components/Marker";
 
 const Globe = dynamic<GlobeProps>(() => import("../app/components/Globe").then(mod => mod.Globe), {
     ssr: false,
@@ -25,6 +26,9 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({ features }) => {
     return (
         <HomeTemplate>
+            {/*<div className="label">*/}
+            {/*    <Marker />*/}
+            {/*</div>*/}
             <Hero />
             <Globe features={features} />
         </HomeTemplate>

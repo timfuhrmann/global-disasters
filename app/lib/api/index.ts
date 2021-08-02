@@ -1,5 +1,14 @@
 const events: Api.Event[] = ["EQ", "TC", "VO", "FL", "DR", "WF"];
 
+export const eventMap: Record<Api.Event, string> = {
+    EQ: "Earthquakes",
+    TC: "Tropical Cyclones",
+    VO: "Volcanoes",
+    FL: "Floods",
+    DR: "Droughts",
+    WF: "Forest Fires",
+};
+
 const db = async <T>(path: string): Promise<T | null> => {
     const res = await fetch("https://www.gdacs.org/gdacsapi/api" + path);
     if (!res.ok) return null;
