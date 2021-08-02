@@ -24,6 +24,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { createLabel, latLonToRad, positions } from "./util";
 import { gsap, Quint } from "gsap";
+import { WEBGL } from "three/examples/jsm/WebGL";
 
 interface Point {
     mesh: Mesh;
@@ -44,7 +45,6 @@ export class GlobeRenderer {
 
     private mouse: Vector2;
     private radius = 90;
-    //private radius = 88;
     private activeSequence = 0;
 
     private requestId: number | null = null;
@@ -55,33 +55,103 @@ export class GlobeRenderer {
     private onMounted: () => void;
 
     constructor(options: RendererOptions) {
+        if (!WEBGL.isWebGLAvailable()) {
+            // @todo alert user
+            return;
+        }
+
         this.onMounted = options.mounted;
+
         this.scene = new Scene();
-        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = positions[0].camera.z;
+        this.raycaster = new Raycaster();
+        this.mouse = new Vector2();
 
-        this.createLights();
+        this.initRenderer();
+        this.initCamera();
+        this.initControls();
+        this.initLights();
+        this.initStars();
+        this.initObject();
+        this.addEventListeners();
+    }
 
+    private initRenderer() {
         this.renderer = new WebGLRenderer({ alpha: true, antialias: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.outputEncoding = sRGBEncoding;
         document.body.appendChild(this.renderer.domElement);
+    }
 
+    private initCamera() {
+        this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        this.camera.position.z = positions[0].camera.z;
+        this.camera.updateMatrix();
+        this.camera.updateMatrixWorld();
+    }
+
+    private initControls() {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.controls.maxDistance = 400;
         this.controls.autoRotate = true;
         this.controls.autoRotateSpeed = 0.5;
         this.controls.enablePan = false;
-        this.raycaster = new Raycaster();
-        this.mouse = new Vector2();
+    }
 
-        this.camera.updateMatrix();
-        this.camera.updateMatrixWorld();
+    private initStars() {
+        const geometry = new BufferGeometry();
+        const particlesCnt = 2000;
+        const positions = new Float32Array(particlesCnt * 3);
 
-        this.initStars();
-        this.loadObject();
-        this.addEventListeners();
+        for (let i = 0; i < positions.length; i++) {
+            const star = new Vector3(
+                Math.random() * 600 - 300,
+                Math.random() * 600 - 300,
+                Math.random() * 600 - 300
+            );
+
+            positions[i] = star.x;
+            positions[i] = star.y;
+            positions[i] = star.z;
+        }
+
+        geometry.setAttribute("position", new BufferAttribute(positions, 3));
+
+        const loader = new TextureLoader();
+        const sprite = loader.load("/star.png");
+
+        const material = new PointsMaterial({
+            color: 0xaaaaaa,
+            size: 0.7,
+            map: sprite,
+        });
+
+        const stars = new Points(geometry, material);
+        this.scene.add(stars);
+    }
+
+    private initObject(): void {
+        const loader = new GLTFLoader();
+        loader.load(
+            "/model/scene.gltf",
+            gltf => {
+                this.object = gltf.scene.children[0];
+                this.object.position.y = positions[0].obj.y;
+                this.object.rotation.z += 2.32;
+                this.scene.add(this.object);
+                this.render();
+                this.onMounted();
+            },
+            undefined,
+            error => console.error(error)
+        );
+    }
+
+    private initLights() {
+        const ambientLight = new AmbientLight(0x404040, 0.5);
+        const hemisphereLight = new HemisphereLight(0xffffbb, 0x080820, 1);
+        this.scene.add(ambientLight);
+        this.scene.add(hemisphereLight);
     }
 
     public startSequence(sequence: number): void {
@@ -120,77 +190,6 @@ export class GlobeRenderer {
                 },
                 0
             );
-    }
-
-    private initStars() {
-        const geometry = new BufferGeometry();
-        const particlesCnt = 2000;
-        const positions = new Float32Array(particlesCnt * 3);
-
-        for (let i = 0; i < positions.length; i++) {
-            const star = new Vector3(
-                Math.random() * 600 - 300,
-                Math.random() * 600 - 300,
-                Math.random() * 600 - 300
-            );
-
-            positions[i] = star.x;
-            positions[i] = star.y;
-            positions[i] = star.z;
-        }
-
-        geometry.setAttribute("position", new BufferAttribute(positions, 3));
-
-        const loader = new TextureLoader();
-        const sprite = loader.load("/star.png");
-
-        const material = new PointsMaterial({
-            color: 0xaaaaaa,
-            size: 0.7,
-            map: sprite,
-        });
-
-        const stars = new Points(geometry, material);
-        this.scene.add(stars);
-    }
-
-    private loadObject(): void {
-        const loader = new GLTFLoader();
-        loader.load(
-            "/model/scene.gltf",
-            gltf => {
-                this.object = gltf.scene.children[0];
-                this.object.position.y = positions[0].obj.y;
-                this.object.rotation.z += 2.32;
-                this.scene.add(this.object);
-                this.render();
-                this.onMounted();
-            },
-            undefined,
-            error => console.error(error)
-        );
-    }
-
-    private createLights() {
-        const ambientLight = new AmbientLight(0x404040, 0.5);
-        const hemisphereLight = new HemisphereLight(0xffffbb, 0x080820, 1);
-        this.scene.add(ambientLight);
-        this.scene.add(hemisphereLight);
-    }
-
-    private addEventListeners(): void {
-        window.addEventListener("resize", this.onResize.bind(this));
-        window.addEventListener("mousemove", this.onMouseMove.bind(this));
-    }
-
-    private removeEventListeners(): void {
-        window.removeEventListener("resize", this.onResize.bind(this));
-        window.removeEventListener("mousemove", this.onMouseMove.bind(this));
-    }
-
-    private onMouseMove(event: MouseEvent) {
-        this.mouse.x = event.clientX / window.innerWidth - 0.5;
-        this.mouse.y = event.clientY / window.innerHeight - 0.5;
     }
 
     private clearPoints() {
@@ -302,6 +301,21 @@ export class GlobeRenderer {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    private onMouseMove(event: MouseEvent) {
+        this.mouse.x = event.clientX / window.innerWidth - 0.5;
+        this.mouse.y = event.clientY / window.innerHeight - 0.5;
+    }
+
+    private addEventListeners(): void {
+        window.addEventListener("resize", this.onResize.bind(this));
+        window.addEventListener("mousemove", this.onMouseMove.bind(this));
+    }
+
+    private removeEventListeners(): void {
+        window.removeEventListener("resize", this.onResize.bind(this));
+        window.removeEventListener("mousemove", this.onMouseMove.bind(this));
     }
 
     private render(): void {
