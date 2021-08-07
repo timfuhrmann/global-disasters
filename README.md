@@ -1,4 +1,8 @@
-This boilerplate is a [Next.js](https://nextjs.org/) project using [Typescript](https://www.typescriptlang.org/) and [Styled Components](https://styled-components.com/).
+In progress: a 3D earth visualization of active global hazards using [Three.js](https://threejs.org/) and WebGL.
+
+Check it out: https://global-disasters.vercel.app/
+
+![Preview](public/preview.png)
 
 ## Getting Started
 
