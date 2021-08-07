@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { Dropdown } from "./Dropdown";
 import { useFilter } from "../lib/filter";
 import { Close } from "../icon/Close";
+import { Menu } from "../icon/Menu";
 
 const OverviewWrapper = styled.div`
     position: fixed;
@@ -107,6 +108,11 @@ const IconClose = styled(Close)`
     height: 2.4rem;
 `;
 
+const IconMenu = styled(Menu)`
+    width: 2.4rem;
+    height: 2.4rem;
+`;
+
 interface OverviewProps {
     features: Api.Feature[];
     onSelect: (pos: [number, number]) => void;
@@ -121,12 +127,16 @@ export const Overview: React.FC<OverviewProps> = ({ features, onSelect, updateRe
         updateResults(results);
     }, [results]);
 
+    const handleClick = (feature: Api.Feature) => {
+        onSelect(feature.geometry.coordinates);
+    };
+
     if (!features || features.length === 0) return null;
 
     return (
         <OverviewWrapper>
             <OverviewButton type="button" onClick={() => setActive(prevState => !prevState)}>
-                <IconClose />
+                {active ? <IconClose /> : <IconMenu />}
             </OverviewButton>
             <OverviewFrame active={active}>
                 <OverviewInner>
@@ -151,7 +161,7 @@ export const Overview: React.FC<OverviewProps> = ({ features, onSelect, updateRe
                             results.map(feature => (
                                 <OverviewItem
                                     key={feature.properties.eventid}
-                                    onClick={() => onSelect(feature.geometry.coordinates)}>
+                                    onClick={() => handleClick(feature)}>
                                     <OverviewItemInner>
                                         {feature.properties.description}
                                     </OverviewItemInner>

@@ -10,13 +10,13 @@ export const eventMap: Record<Api.Event, string> = {
 };
 
 const db = async <T>(path: string): Promise<T | null> => {
-    const res = await fetch("https://www.gdacs.org/gdacsapi/api" + path);
+    const res = await fetch("https://www.gdacs.org/gdacsapi/api/events" + path);
     if (!res.ok) return null;
     return res.json();
 };
 
 export const fetchEventsByType = async (type: Api.Event): Promise<Api.Feature[] | null> => {
-    const res = await db<Api.FeatureCollection>(`/events/geteventlist/MAP?eventtypes=${type}`);
+    const res = await db<Api.FeatureCollection>(`/geteventlist/MAP?eventtypes=${type}`);
 
     if (!res) {
         return null;
@@ -41,4 +41,14 @@ export const fetchEvents = async () => {
     const featuresCollection = res.filter(event => event !== null) as Api.Feature[][];
 
     return Array.prototype.concat.apply([], featuresCollection);
+};
+
+export const fetchEvent = async (id: number, eventType: Api.Event) => {
+    const res = await db<any>(`/geteventdata?eventtype=${eventType}&eventid=${id}`);
+
+    if (!res) {
+        return null;
+    }
+
+    return res;
 };

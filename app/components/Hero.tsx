@@ -93,7 +93,9 @@ export const Hero: React.FC = () => {
         document.addEventListener("mousemove", onMouseMove);
     }, []);
 
-    const handleClick = () => router.push({ query: { sequence: 1 } }, undefined, { shallow: true });
+    const handleClick = () => {
+        router.push({ query: { ...router.query, sequence: 1 } }, router.asPath, { shallow: true });
+    };
 
     return (
         <HeroWrapper active={!sequence || typeof sequence !== "string"}>

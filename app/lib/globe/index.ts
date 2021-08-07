@@ -17,12 +17,11 @@ import {
     Points,
     BufferGeometry,
     BufferAttribute,
-    MathUtils,
     Material,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
-import { createLabel, latLonToRad, positions } from "./util";
+import { createLabel, latLonToRad } from "./util";
 import { gsap, Quint } from "gsap";
 import { WEBGL } from "three/examples/jsm/WebGL";
 
@@ -75,6 +74,9 @@ export class GlobeRenderer {
         this.addEventListeners();
     }
 
+    /**
+     * Initialize scene
+     */
     private initRenderer() {
         this.renderer = new WebGLRenderer({ alpha: true, antialias: true });
         this.renderer.setPixelRatio(window.devicePixelRatio);
@@ -85,7 +87,7 @@ export class GlobeRenderer {
 
     private initCamera() {
         this.camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.camera.position.z = positions[0].camera.z;
+        this.camera.position.z = 75;
         this.camera.updateMatrix();
         this.camera.updateMatrixWorld();
     }
@@ -136,7 +138,7 @@ export class GlobeRenderer {
             "/model/scene.gltf",
             gltf => {
                 this.object = gltf.scene.children[0];
-                this.object.position.y = positions[0].obj.y;
+                this.object.position.y = -100;
                 this.object.rotation.z += 2.32;
                 this.scene.add(this.object);
                 this.render();
@@ -154,103 +156,9 @@ export class GlobeRenderer {
         this.scene.add(hemisphereLight);
     }
 
-    public startSequence(sequence: number): void {
-        if (!this.object) {
-            return;
-        }
-
-        gsap.timeline({
-            defaults: { duration: 1, ease: Quint.easeInOut },
-            onComplete: () => {
-                this.activeSequence = sequence;
-
-                if (sequence === 1) {
-                    this.controls.minDistance = 150;
-                }
-            },
-        })
-            .to(
-                this.object.position,
-                {
-                    y: positions[sequence].obj.y,
-                },
-                0
-            )
-            .to(
-                this.camera.position,
-                {
-                    z: positions[sequence].camera.z,
-                },
-                0
-            )
-            .to(
-                this.scene.rotation,
-                {
-                    y: 0,
-                },
-                0
-            );
-    }
-
-    private clearPoints() {
-        this.points.forEach(point => {
-            point.label.remove();
-            point.mesh.geometry.dispose();
-            (point.mesh.material as Material).dispose();
-            this.scene.remove(point.mesh);
-        });
-
-        this.points = [];
-    }
-
-    public setFeatures(features: Api.Feature[]): void {
-        // if (this.activeSequence > 0) {
-        //     gsap.timeline().to(
-        //         this.camera.rotation,
-        //         {
-        //             duration: 1,
-        //             z: this.camera.rotation.z + 100,
-        //             ease: Quint.easeInOut,
-        //         },
-        //         0
-        //     );
-        // }
-
-        this.clearPoints();
-
-        this.features = features;
-        this.addCoordinates();
-    }
-
-    private addCoordinates() {
-        if (!this.features) {
-            return;
-        }
-
-        this.features.map(feature => {
-            const coordinates = feature.geometry.coordinates;
-            this.addPoint(coordinates[0], coordinates[1], feature);
-        });
-    }
-
-    private addPoint(lon: number, lat: number, feature: Api.Feature) {
-        if (!this.object) {
-            return;
-        }
-
-        const mesh = new Mesh(new SphereBufferGeometry(0.0001, 20, 20), new MeshBasicMaterial());
-
-        const { x, y, z } = latLonToRad(lat, lon, this.radius);
-
-        mesh.position.set(x, y, z);
-
-        const label = createLabel(feature);
-
-        this.points.push({ mesh, label });
-
-        this.scene.add(mesh);
-    }
-
+    /**
+     * Scene controls
+     */
     private toPos(pos: Vector3, duration = 2): void {
         const { x, y, z } = this.camera.position;
         const start = new Vector3(x, y, z);
@@ -297,6 +205,91 @@ export class GlobeRenderer {
         this.toPos(pos);
     }
 
+    private clearPoints() {
+        this.points.forEach(point => {
+            point.label.remove();
+            point.mesh.geometry.dispose();
+            (point.mesh.material as Material).dispose();
+            this.scene.remove(point.mesh);
+        });
+
+        this.points = [];
+    }
+
+    public setFeatures(features: Api.Feature[]): void {
+        this.clearPoints();
+
+        this.features = features;
+        this.addCoordinates();
+    }
+
+    private addCoordinates() {
+        if (!this.features) {
+            return;
+        }
+
+        this.features.map(feature => {
+            const coordinates = feature.geometry.coordinates;
+            this.addPoint(coordinates[0], coordinates[1], feature);
+        });
+    }
+
+    private addPoint(lon: number, lat: number, feature: Api.Feature) {
+        if (!this.object) {
+            return;
+        }
+
+        const mesh = new Mesh(new SphereBufferGeometry(0.0001, 20, 20), new MeshBasicMaterial());
+
+        const { x, y, z } = latLonToRad(lat, lon, this.radius);
+
+        mesh.position.set(x, y, z);
+
+        const label = createLabel(feature);
+
+        this.points.push({ mesh, label });
+
+        this.scene.add(mesh);
+    }
+
+    public sequenceOpen() {
+        if (!this.object) {
+            return;
+        }
+
+        gsap.timeline({
+            defaults: { duration: 1, ease: Quint.easeInOut },
+            onComplete: () => {
+                this.activeSequence = 1;
+                this.controls.minDistance = 150;
+            },
+        })
+            .to(
+                this.object.position,
+                {
+                    y: 0,
+                },
+                0
+            )
+            .to(
+                this.camera.position,
+                {
+                    z: 200,
+                },
+                0
+            )
+            .to(
+                this.scene.rotation,
+                {
+                    y: 0,
+                },
+                0
+            );
+    }
+
+    /**
+     * Event listeners
+     */
     private onResize() {
         this.camera.aspect = window.innerWidth / window.innerHeight;
         this.camera.updateProjectionMatrix();
@@ -318,6 +311,9 @@ export class GlobeRenderer {
         window.removeEventListener("mousemove", this.onMouseMove.bind(this));
     }
 
+    /**
+     * Render scene
+     */
     private render(): void {
         this.renderer.render(this.scene, this.camera);
 
@@ -356,6 +352,9 @@ export class GlobeRenderer {
         this.requestId = window.requestAnimationFrame(this.render.bind(this));
     }
 
+    /**
+     * Destroy scene
+     */
     public destroy(): void {
         if (this.requestId) {
             window.cancelAnimationFrame(this.requestId);

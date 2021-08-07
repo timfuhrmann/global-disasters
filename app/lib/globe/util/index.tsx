@@ -2,25 +2,6 @@ import ReactDOM from "react-dom";
 import { Vector3 } from "three";
 import { Marker } from "../../../components/Marker";
 
-export const positions = [
-    {
-        camera: {
-            z: 75,
-        },
-        obj: {
-            y: -100,
-        },
-    },
-    {
-        camera: {
-            z: 200,
-        },
-        obj: {
-            y: 0,
-        },
-    },
-];
-
 export const latLonToRad = (lat: number, lon: number, radius: number): Vector3 => {
     const phi = (90 - lat) * (Math.PI / 180);
     const theta = (lon + 180) * (Math.PI / 180);

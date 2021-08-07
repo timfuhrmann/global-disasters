@@ -40,6 +40,8 @@ const MarkerFrame = styled.div<{ $score: number }>`
                 return `background-color: #BFBB28`;
             case 3:
                 return `background-color: #BF4E56`;
+            default:
+                return `background-color: #BFBB28`;
         }
     }};
 `;

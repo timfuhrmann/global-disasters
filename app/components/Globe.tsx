@@ -44,7 +44,7 @@ export const Globe: React.FC<GlobeProps> = ({ features }) => {
             return;
         }
 
-        renderer.startSequence(parseInt(sequence, 10));
+        renderer.sequenceOpen();
         renderer.setFeatures(featureCollection);
     }, [renderer, mounted, sequence]);
 
@@ -53,9 +53,8 @@ export const Globe: React.FC<GlobeProps> = ({ features }) => {
             return;
         }
 
-        console.log("haha");
         renderer.setFeatures(featureCollection);
-    }, [featureCollection]);
+    }, [featureCollection, renderer, sequence]);
 
     if (!sequence) return null;
 
