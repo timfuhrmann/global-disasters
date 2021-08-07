@@ -1,7 +1,5 @@
 In progress: a 3D earth visualization of active global hazards using [Three.js](https://threejs.org/) and WebGL.
 
-Check it out: https://global-disasters.vercel.app/
-
 ![Preview](public/preview.png)
 
 ## Getting Started
