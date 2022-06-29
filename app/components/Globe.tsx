@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { GlobeRenderer } from "../lib/globe";
-import { Overview } from "./Overview";
 import { useRouter } from "next/router";
 
 export interface GlobeProps {
@@ -10,7 +9,6 @@ export interface GlobeProps {
 export const Globe: React.FC<GlobeProps> = ({ features }) => {
     const router = useRouter();
     const { sequence } = router.query;
-    const [featureCollection, setFeatureCollection] = useState<Api.Feature[]>(features);
     const [mounted, setMounted] = useState<boolean>(false);
     const [renderer, setRenderer] = useState<GlobeRenderer | null>(null);
     const [activePosition, setActivePosition] = useState<[number, number] | null>(null);
@@ -45,24 +43,10 @@ export const Globe: React.FC<GlobeProps> = ({ features }) => {
         }
 
         renderer.sequenceOpen();
-        renderer.setFeatures(featureCollection);
+        renderer.setFeatures(features);
     }, [renderer, mounted, sequence]);
-
-    useEffect(() => {
-        if (!renderer || !sequence || typeof sequence !== "string") {
-            return;
-        }
-
-        renderer.setFeatures(featureCollection);
-    }, [featureCollection, renderer, sequence]);
 
     if (!sequence) return null;
 
-    return (
-        <Overview
-            features={features}
-            onSelect={pos => setActivePosition(pos)}
-            updateResults={setFeatureCollection}
-        />
-    );
+    return null;
 };

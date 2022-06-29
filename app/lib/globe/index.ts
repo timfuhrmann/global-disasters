@@ -1,3 +1,4 @@
+import WEBGL from "three/examples/jsm/capabilities/WebGL";
 import {
     Scene,
     PerspectiveCamera,
@@ -23,7 +24,6 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { createLabel, latLonToRad } from "./util";
 import { gsap, Quint } from "gsap";
-import { WEBGL } from "three/examples/jsm/WebGL";
 
 interface Point {
     mesh: Mesh;
@@ -56,7 +56,7 @@ export class GlobeRenderer {
     constructor(options: RendererOptions) {
         if (!WEBGL.isWebGLAvailable()) {
             // @todo alert user
-            return;
+            throw new Error("WebGl is not supported");
         }
 
         this.onMounted = options.mounted;
@@ -94,6 +94,7 @@ export class GlobeRenderer {
 
     private initControls() {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
         this.controls.maxDistance = 400;
         this.controls.autoRotate = true;
         this.controls.autoRotateSpeed = 0.5;

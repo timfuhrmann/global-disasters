@@ -1,14 +1,5 @@
 const events: Api.Event[] = ["EQ", "TC", "VO", "FL", "DR", "WF"];
 
-export const eventMap: Record<Api.Event, string> = {
-    EQ: "Earthquakes",
-    TC: "Tropical Cyclones",
-    VO: "Volcanoes",
-    FL: "Floods",
-    DR: "Droughts",
-    WF: "Forest Fires",
-};
-
 const db = async <T>(path: string): Promise<T | null> => {
     const res = await fetch("https://www.gdacs.org/gdacsapi/api/events" + path);
     if (!res.ok) return null;
@@ -41,14 +32,4 @@ export const fetchEvents = async () => {
     const featuresCollection = res.filter(event => event !== null) as Api.Feature[][];
 
     return Array.prototype.concat.apply([], featuresCollection);
-};
-
-export const fetchEvent = async (id: number, eventType: Api.Event) => {
-    const res = await db<any>(`/geteventdata?eventtype=${eventType}&eventid=${id}`);
-
-    if (!res) {
-        return null;
-    }
-
-    return res;
 };

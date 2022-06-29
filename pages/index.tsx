@@ -31,11 +31,12 @@ const Home: React.FC<HomeProps> = ({ features }) => {
     );
 };
 
-export const getServerSideProps: GetServerSideProps = async () => {
+export const getStaticProps: GetServerSideProps = async () => {
     const features = await fetchEvents();
 
     return {
         props: { features: features || [] },
+        revalidate: 60 * 5, // 5 minutes
     };
 };
 
