@@ -23,25 +23,37 @@ const HeroInner = styled.div`
 `;
 
 const HeroOverline = styled.div`
-    font-size: 2rem;
+    font-size: 1.5rem;
     text-transform: uppercase;
     margin-bottom: 2rem;
     letter-spacing: -0.05rem;
+
+    ${p => p.theme.bp.l} {
+        font-size: 2rem;
+    }
 `;
 
 const HeroHeadline = styled.h1`
-    font-size: 10rem;
+    font-size: 6.5rem;
     font-weight: 600;
     letter-spacing: -0.3rem;
     line-height: 1;
     margin-bottom: 2rem;
+
+    ${p => p.theme.bp.l} {
+        font-size: 10rem;
+    }
 `;
 
 const HeroText = styled.div`
-    font-size: 3rem;
+    font-size: 2.5rem;
     letter-spacing: -0.1rem;
     line-height: 1.2;
     margin-bottom: 4rem;
+
+    ${p => p.theme.bp.l} {
+        font-size: 3rem;
+    }
 `;
 
 const HeroButton = styled.button`
@@ -91,6 +103,7 @@ export const Hero: React.FC = () => {
         };
 
         document.addEventListener("mousemove", onMouseMove);
+        return () => document.removeEventListener("mousemove", onMouseMove);
     }, []);
 
     const handleClick = () => {
